@@ -13,8 +13,8 @@
             exit 55
         fi
 
-    #find . -print | egrep "\.JPG$|\.MOV$|\.PNG$" |
     find . -print | egrep "\.JPG$" |
+    find . -print | egrep "\.JPG$|\.MOV$|\.PNG$" |
     while read path
     do
         #   echo $path
@@ -27,6 +27,10 @@
                 echo "Error $stat : path no longer available -> $path"
                 exit 21
             fi
+
+        #   display
+            echo "$path"
+    
     
         #   copy to tmp
             base="`basename $path 2>&1`"
@@ -38,25 +42,32 @@
                 exit 22
             fi
 
-        #   display
-            echo "$base              -> $path"
-    
         #   strip the ACL data
             chmod -N    /tmp/$base
 
             stat=$?
-            if [ $stat -ne "0" ]; then
-                echo "Error $stat : copy failed -> $path"
+            if [ $stat -gt 0 ]; then
+                echo "Error $stat : -N ACL drop failed -> $path"
+                exit 23
+            fi
+    
+        #   strip extended attributes data
+            xattr -c    /tmp/$base
+
+            stat=$?
+            if [ $stat -gt 0 ]; then
+                echo "Error $stat : xattr drop failed -> $path"
                 exit 23
             fi
     
         #   copy to the destination
-            #   cp -p /tmp/$base /Volumes/hub/Pictures/2018.d/
-            cp -p /tmp/$base ~/2018.d/
+            # cp -p /tmp/$base ~/2018.d/
+
+            cp -p /tmp/$base /Volumes/hub/depot.d
 
             stat=$?
-            if [ $stat -ne "0" ]; then
-                echo "Error $stat : copy failed -> $path"
+            if [ $stat -gt 0 ]; then
+                echo "Error $stat : ew copy failed -> $path"
                 exit 24
             fi
     
